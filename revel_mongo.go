@@ -46,6 +46,7 @@ var commands = []*Command{
 	cmdMgoConfig,
 	cmdMgoSetup,
 	cmdGenerate,
+	cmdDelete,
 }
 
 func main() {

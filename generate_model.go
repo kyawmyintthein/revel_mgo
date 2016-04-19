@@ -68,6 +68,22 @@ func generateModel(mname, fields, crupath string) {
 	}
 }
 
+func deleteModel(mname, crupath string) {
+	_, f := path.Split(mname)
+	modelName := strings.Title(f)
+	filePath := path.Join(crupath, "app", "models", modelName + ".go")
+	if _, err := os.Stat(filePath); !os.IsNotExist(err) {
+		err = os.Remove(filePath)
+		if err != nil{
+			ColorLog("[ERRO] Could not delete model struct: %s\n", err)
+			os.Exit(2)	
+		}
+		ColorLog("[INFO] model file deleted: %s\n", filePath)
+		
+	}
+
+}
+
 var modelTpl = `package {{packageName}}
 
 import (
