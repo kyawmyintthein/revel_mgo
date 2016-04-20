@@ -43,7 +43,6 @@ func (cmd *Command) Name() string {
 }
 
 var commands = []*Command{
-	cmdMgoConfig,
 	cmdMgoSetup,
 	cmdGenerate,
 	cmdDelete,

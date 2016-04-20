@@ -51,8 +51,8 @@ func generateCode(cmd *Command, args []string){
 	case "scaffold":
 	case "controller":
 		if len(args) == 2 {
-			// cname := args[1]
-			// generateModel(cname, curpath)
+			cname := args[1]
+			generateController(cname, curpath)
 		} else {
 			errorf("[ERRO] Wrong number of arguments\n")
 			errorf("[HINT] Usage: revel_mgo generate model [controllername]\n")

@@ -5,7 +5,6 @@ import(
 	"path"
 	// "strings"
 	"log"
-	"github.com/robfig/config"
 )
 
 var cmdMgoSetup = &Command{
@@ -23,11 +22,11 @@ For example:
 `,
 }
 
-var collectionTpl = `package db
+var collectionTpl = `package mongodb
 
 import (
 	"gopkg.in/mgo.v2"
-	"errors"
+	"log"
 )
 
 type Collection struct {
@@ -42,14 +41,12 @@ func (c *Collection) Connect() {
 }
 
 func NewCollectionSession(name string) *Collection {
-	dbname,flag := dbConfig.String("mongo.name")
-	if flag == false{
-		panic(errors.New("Missing databse name in config."))
-	}
+	log.Println(name)
 	var c = Collection{
-		db:   newDBSession(dbname),
+		db:   newDBSession(DBNAME),
 		name: name,
 	}
+	log.Printf("%+v",c)
 	c.Connect()
 	return &c
 }
@@ -57,9 +54,10 @@ func NewCollectionSession(name string) *Collection {
 func (c *Collection) Close() {
 	service.Close(c)
 }
+
 `
 
-var databaseTpl = `package db
+var databaseTpl = `package mongodb
 
 import "gopkg.in/mgo.v2"
 
@@ -70,12 +68,15 @@ type Database struct {
 }
 
 func (db *Database) Connect() {
+
 	db.s = service.Session()
 	session := *db.s.DB(db.name)
 	db.session = &session
+
 }
 
 func newDBSession(name string) *Database {
+
 	var db = Database{
 		name: name,
 	}
@@ -84,27 +85,16 @@ func newDBSession(name string) *Database {
 }
 `
 
-var driverTpl = `package db
+var driverTpl = `package mongodb
 
-import "github.com/revel/revel"
+var MaxPool int
+var PATH    string
+var DBNAME  string
 
-const (
-	dbConfigPath string = "conf/"
-	dbConfigName string = "database.conf"
-)
 
-var maxPool int
-var dbConfig *revel.MergedConfig
-
-func init() {
-	dbConfig = loadDatabaseConfig()
-	maxPool = dbConfig.IntDefault("mongo.maxPool", 30)
-	checkAndInitServiceConnection()
-}
-
-func checkAndInitServiceConnection() {
+func CheckAndInitServiceConnection() {
 	if service.baseSession == nil {
-		service.URL, _ = dbConfig.String("mongo.maxPool")
+		service.URL = PATH
 		err := service.New()
 		if err != nil {
 			panic(err)
@@ -112,17 +102,10 @@ func checkAndInitServiceConnection() {
 	}
 }
 
-func loadDatabaseConfig() *revel.MergedConfig {
-	revel.ConfPaths = append(revel.ConfPaths, dbConfigPath)
-	Config, err := revel.LoadConfig(dbConfigName)
-	if err != nil{
-		panic(err)
-	}
-	return Config;
-}  
+
 `
 
-var serviceTpl = `package db
+var serviceTpl = `package mongodb
 
 import "gopkg.in/mgo.v2"
 
@@ -137,8 +120,8 @@ var service Service
 
 func (s *Service) New() error {
 	var err error
-	s.queue = make(chan int, maxPool)
-	for i := 0; i < maxPool; i = i + 1 {
+	s.queue = make(chan int, MaxPool)
+	for i := 0; i < MaxPool; i = i + 1 {
 		s.queue <- 1
 	}
 	s.Open = 0
@@ -157,6 +140,7 @@ func (s *Service) Close(c *Collection) {
 	s.queue <- 1
 	s.Open--
 }
+
 `
 
 
@@ -171,12 +155,6 @@ func mgoSetup(cmd *Command, args []string) {
 		os.Exit(2)
 	}
 	pwd, _ := os.Getwd()
-
-	config, err := config.ReadDefault(path.Join(pwd, "conf", "database.conf"))
-	if err != nil || config == nil {
-		log.Fatalln("Failed to load database.conf:", err)
-	}
-
 	databaseFolder := path.Join(pwd, "app", "models", "mongodb")
 	files := []string{"database","collection","driver","service"}
 

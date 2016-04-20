@@ -205,6 +205,13 @@ func empty(dirname string) bool {
 	return len(results) == 0
 }
 
+func GetControllerStruct(controllerName string) (string, error){
+	controllerStr := "type " + controllerName +"Controller" + " struct{\n"
+	controllerStr += " *revel.Controller\n"
+	controllerStr += "}\n"
+	return controllerStr, nil
+}
+
 func GetStruct(structname, fields string) (string, error) {
 	if fields == "" {
 		return "", errors.New("fields can't empty")
@@ -227,6 +234,8 @@ func GetStruct(structname, fields string) (string, error) {
 		}
 		structStr = structStr + camelString(kv[0]) + "       " + typ + "     " + "`json:\"" + kv[0] + "\" bson:\"" + kv[0]+ "\"`\n"
 	}
+	structStr = structStr + "CreatedAt" + "       " + "time.Time" + "     " + "`json:\"created_at\" bson:\"created_at\"`\n"
+	structStr = structStr + "UpdatedAt" + "       " + "time.Time" + "     " + "`json:\"updated_at\" bson:\"updated_at\"`\n"
 	structStr += "}\n"
 	return structStr, nil
 }
@@ -249,7 +258,7 @@ func GetAttrs(fields string) (string, error) {
 		}
 		structStr = structStr + "\"" + kv[0] + "\": " + "m." + camelString(kv[0]) + ","
 	}
-	structStr += "}\n"
+	structStr += "},\n"
 	return structStr, nil
 }
 

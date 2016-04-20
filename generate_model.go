@@ -48,11 +48,9 @@ func generateModel(mname, fields, crupath string) {
 		content = strings.Replace(content, "{{modelName}}", modelName, -1)
 		content = strings.Replace(content, "{{modelStruct}}", modelStruct, -1)
 		content = strings.Replace(content, "{{collectionFuncName}}", collectionFuncName, -1)
-		content = strings.Replace(content, "{{collectionName}}", strings.ToLower(modelName), -1)
+		content = strings.Replace(content, "{{collectionName}}", strings.ToLower(modelName) + "s", -1)
 		content = strings.Replace(content, "{{modelObject}}", strings.ToLower(modelName), -1)
 		content = strings.Replace(content, "{{listModelName}}",  strings.ToLower(modelName) + "s", -1)
-
-		content = strings.Replace(content, "{{query}}",  "nil", -1)
 		content = strings.Replace(content, "{{sortFields}}",  "\"-createdAt\"", -1)
 		content = strings.Replace(content, "{{updatedData}}",  updatedStr, -1)
 		
@@ -87,31 +85,24 @@ func deleteModel(mname, crupath string) {
 var modelTpl = `package {{packageName}}
 
 import (
-	"errors"
-	"fmt"
-	"reflect"
-	"strings"
 	"time"
 	"gopkg.in/mgo.v2/bson"
-	"github.com/revel/revel"
 	"{{mongoPkg}}"
 )
 
 {{modelStruct}}
 
-func {{collectionFuncName}} *db.Collection {
-   cName, _ := revel.Config.String("{{collectionName}}")
-   return db.NewCollectionSession(cName)
+func {{collectionFuncName}}  *mongodb.Collection  {
+   return mongodb.NewCollectionSession("{{collectionName}}")
 }
 
 // Add{{modelName}} insert a new {{modelName}} into database and returns
 // last inserted {{modelObject}} on success.
-func Add{{modelName}}(m *{{modelName}}) ({{modelObject}} {{modelName}}, err error) {
+func Add{{modelName}}(m {{modelName}}) ({{modelObject}} {{modelName}}, err error) {
 	c := {{collectionFuncName}}
 	defer c.Close()
 	m.ID = bson.NewObjectId()
 	m.CreatedAt = time.Now()
-	m.UpdatedAt = time.Now()
 	return m, c.Session.Insert(m)
 }
 
@@ -121,7 +112,7 @@ func (m {{modelName}}) Update{{modelName}}() error{
 	c := {{collectionFuncName}}
 	defer c.Close()
 	
-	err = c.Session.Update(bson.M{
+	err := c.Session.Update(bson.M{
 		"_id": m.ID,
 	}, bson.M{
 		"$set": {{updatedData}}
@@ -135,7 +126,7 @@ func (m {{modelName}}) Delete{{modelName}}() error{
 	c := {{collectionFuncName}}
 	defer c.Close()
 
-	err = c.Session.Remove(bson.M{"_id": m.ID})
+	err := c.Session.Remove(bson.M{"_id": m.ID})
 	return err
 }
 
@@ -150,8 +141,7 @@ func Get{{modelName}}s() ([]{{modelName}}, error) {
 	c := {{collectionFuncName}}
 	defer c.Close()
 
-	query := {{query}}
-	err = c.Session.Find(query).Sort({{sortFields}}).All({{listModelName}})
+	err = c.Session.Find(nil).Sort({{sortFields}}).All(&{{listModelName}})
 	return {{listModelName}}, err
 }
 
@@ -167,7 +157,7 @@ func Get{{modelName}}(id bson.ObjectId) ({{modelName}}, error) {
 	defer c.Close()
 
 
-	err = c.Session.Find(bson.M{ID: id}).One({{modelObject}})
+	err = c.Session.Find(bson.M{"_id": id}).One(&{{modelObject}})
 	return {{modelObject}}, err
 }
 `
