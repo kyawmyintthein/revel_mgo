@@ -49,6 +49,21 @@ func generateCode(cmd *Command, args []string){
 	log.Println(len(args))
 	switch gcmd {
 	case "scaffold":
+		if len(args) < 2 {
+			log.Println("[ERRO] Wrong number of arguments\n")
+			errorf("[HINT] Usage: revel_mgo generate model [modelname] [-fields=\"\"]\n")
+			os.Exit(2)
+		}
+		cmd.Flag.Parse(args[2:])
+		if fields == "" {
+			log.Println("[ERRO] Wrong number of arguments\n")
+			errorf("[HINT] Usage: bee generate model [modelname] [-fields=\"title:string,body:text\"]\n")
+			os.Exit(2)
+		}
+		sname := args[1]
+		log.Printf("[INFO] Using '%s' as model name\n", sname)
+		generateModel(sname, fields.String(), curpath)
+		generateController(sname, curpath)
 	case "controller":
 		if len(args) == 2 {
 			cname := args[1]
