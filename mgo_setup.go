@@ -3,8 +3,6 @@ package main
 import(
 	"os"
 	"path"
-	// "strings"
-	"log"
 )
 
 var cmdMgoSetup = &Command{
@@ -42,7 +40,6 @@ var collectionTpl = `package mongodb
 
 import (
 	"gopkg.in/mgo.v2"
-	"log"
 )
 
 type Collection struct {
@@ -57,12 +54,10 @@ func (c *Collection) Connect() {
 }
 
 func NewCollectionSession(name string) *Collection {
-	log.Println(name)
 	var c = Collection{
 		db:   newDBSession(DBNAME),
 		name: name,
 	}
-	log.Printf("%+v",c)
 	c.Connect()
 	return &c
 }
@@ -206,8 +201,7 @@ func mgoSetup(cmd *Command, args []string) {
 			file.WriteString(content)
 			ColorLog("[SUCC] mongo file generated as '%s' .\n", databaseFile)
 		} else {
-			log.Println(err)
-			errorf("Missing database.go.\nRun 'revel help db' for usage.\n")
+			ColorLog("Missing database.go.\n '%s' \nRun 'revel help db' for usage.\n", err)
 		}	
 	}
 	ColorLog("[SUCC] mongodb package now in your project.\n")

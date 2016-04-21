@@ -146,12 +146,13 @@ func convertToObjectIdHex(id string) (result bson.ObjectId, err error) {
 	return bson.ObjectIdHex(id), err
 }
 
-func buildErrResponse(err error, errorCode string) CtrlErr{
+func buildErrResponse(err error, errorCode string) CtrlErr {
 	ctrlErr := CtrlErr{}
-	ctrlErr["error"] = err
-	ctrlErr["code"] = errorCode
+	ctrlErr["error_message"] = err.Error()
+	ctrlErr["error_code"] = errorCode
 	return ctrlErr
 }
+
 
 `
 var controllerTpl = `package {{packageName}}
@@ -173,8 +174,9 @@ func (c {{contorllerStructName}}) Index() revel.Result {
 	)
 	{{modelObjects}}, err = models.Get{{modelStructs}}()
 	if err != nil{
+		errResp := buildErrResponse(err,"500")
 		c.Response.Status = 500
-		return c.RenderError(err)
+		return c.RenderJson(errResp)
 	}
 	c.Response.Status = 200
     return c.RenderJson({{modelObjects}})
@@ -188,23 +190,23 @@ func (c {{contorllerStructName}}) Show(id string) revel.Result {
     )
 
     if id == ""{
-    	errResp := buildErrResponse(errors.New("Invalid {{modelObject}} id format"),"394")
-    	c.Response.Status = 403
-    	c.Forbidden("Unable to parse ID param", errResp)
+    	errResp := buildErrResponse(errors.New("Invalid {{modelObject}} id format"),"400")
+    	c.Response.Status = 400
+    	return c.RenderJson(errResp)
     }
 
     {{modelObject}}ID, err = convertToObjectIdHex(id)
     if err != nil{
-    	errResp := buildErrResponse(errors.New("Invalid {{modelObject}} id format"),"394")
-    	c.Response.Status = 403
-    	c.Forbidden("Unable to parse ID param", errResp)
+    	errResp := buildErrResponse(errors.New("Invalid {{modelObject}} id format"),"400")
+    	c.Response.Status = 400
+    	return c.RenderJson(errResp)
     }
 
     {{modelObject}}, err = models.Get{{modelStruct}}({{modelObject}}ID)
     if err != nil{
-    	errResp := buildErrResponse(err,"394")
-    	c.Response.Status = 403
-    	c.Forbidden("Unable to parse ID param", errResp)
+    	errResp := buildErrResponse(err,"500")
+    	c.Response.Status = 500
+    	return c.RenderJson(errResp)
     }
   
     c.Response.Status = 200
@@ -219,16 +221,16 @@ func (c {{contorllerStructName}}) Create() revel.Result {
 
     err = json.NewDecoder(c.Request.Body).Decode(&{{modelObject}})
 	if err != nil {
-		errResp := buildErrResponse(err, "394")
+		errResp := buildErrResponse(err, "403")
 		c.Response.Status = 403
-		c.Forbidden("Unable to parse ID param", errResp)
+		return c.RenderJson(errResp)
 	}
 
 	{{modelObject}}, err = models.Add{{modelStruct}}({{modelObject}})
 	if err != nil{
-		errResp := buildErrResponse(err,"394")
-    	c.Response.Status = 403
-    	c.Forbidden("Unable to parse ID param", errResp)
+		errResp := buildErrResponse(err,"500")
+    	c.Response.Status = 500
+    	return c.RenderJson(errResp)
 	}
     c.Response.Status = 201
     return c.RenderJson({{modelObject}})
@@ -241,16 +243,16 @@ func (c {{contorllerStructName}}) Update() revel.Result {
     )
     err = json.NewDecoder(c.Request.Body).Decode(&{{modelObject}})
 	if err != nil{
-		errResp := buildErrResponse(err,"394")
-    	c.Response.Status = 403
-    	c.Forbidden("Unable to parse ID param", errResp)
+		errResp := buildErrResponse(err,"400")
+    	c.Response.Status = 400
+    	return c.RenderJson(errResp)
 	}
 
 	err = {{modelObject}}.Update{{modelStruct}}()
 	if err != nil{
-		errResp := buildErrResponse(err,"394")
-    	c.Response.Status = 403
-    	c.Forbidden("Unable to parse ID param", errResp)
+		errResp := buildErrResponse(err,"500")
+    	c.Response.Status = 500
+    	return c.RenderJson(errResp)
 	}
     return c.RenderJson({{modelObject}})
 }
@@ -262,29 +264,29 @@ func (c {{contorllerStructName}}) Delete(id string) revel.Result {
     	{{modelObject}}ID bson.ObjectId 
     )
      if id == ""{
-    	errResp := buildErrResponse(errors.New("Invalid {{modelObject}} id format"),"394")
-    	c.Response.Status = 403
-    	c.Forbidden("Unable to parse ID param", errResp)
+    	errResp := buildErrResponse(errors.New("Invalid {{modelObject}} id format"),"400")
+    	c.Response.Status = 400
+    	return c.RenderJson(errResp)
     }
 
     {{modelObject}}ID, err = convertToObjectIdHex(id)
     if err != nil{
-    	errResp := buildErrResponse(errors.New("Invalid {{modelObject}} id format"),"394")
-    	c.Response.Status = 403
-    	c.Forbidden("Unable to parse ID param", errResp)
+    	errResp := buildErrResponse(errors.New("Invalid {{modelObject}} id format"),"400")
+    	c.Response.Status = 400
+    	return c.RenderJson(errResp)
     }
 
     {{modelObject}}, err = models.Get{{modelStruct}}({{modelObject}}ID)
     if err != nil{
-    	errResp := buildErrResponse(err,"394")
-    	c.Response.Status = 403
-    	c.Forbidden("Unable to parse ID param", errResp)
+    	errResp := buildErrResponse(err,"500")
+    	c.Response.Status = 500
+    	return c.RenderJson(errResp)
     }
 	err = {{modelObject}}.Delete{{modelStruct}}()
 	if err != nil{
-		errResp := buildErrResponse(err,"394")
-    	c.Response.Status = 403
-    	c.Forbidden("Unable to parse ID param", errResp)
+		errResp := buildErrResponse(err,"500")
+    	c.Response.Status = 500
+    	return c.RenderJson(errResp)
 	} 
 	c.Response.Status = 204
     return c.RenderJson(nil)

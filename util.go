@@ -256,6 +256,7 @@ func GetAttrs(fields string) (string, error) {
 		}
 		structStr = structStr + "\"" + kv[0] + "\": " + "m." + camelString(kv[0]) + ","
 	}
+	structStr += "\"updatedAt\": " + "time.Now(),"
 	structStr += "},\n"
 	return structStr, nil
 }
