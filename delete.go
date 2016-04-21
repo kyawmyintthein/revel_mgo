@@ -2,26 +2,17 @@ package main
 
 import(
 	"os"
-	"log"
 )
 
 var cmdDelete = &Command{
-	UsageLine: "delete [Command]",
-	Short:     "source code generator",
+	UsageLine: "delete [Command] [filename]",
+	Short:     "remove source code",
 	Long: `
-bee generate scaffold [scaffoldname] [-fields=""] [-driver=mysql] [-conn="root:@tcp(127.0.0.1:3306)/test"]
-    The generate scaffold command will do a number of things for you.
-    -fields: a list of table fields. Format: field:type, ...
-    -driver: [mysql | postgres | sqlite], the default is mysql
-    -conn:   the connection string used by the driver, the default is root:@tcp(127.0.0.1:3306)/test
-    example: bee generate scaffold post -fields="title:string,body:text"
+revel_mgo delete [command] [filename] 
 
-bee generate model [modelname] [-fields=""]
-    generate RESTFul model based on fields
-    -fields: a list of table fields. Format: field:type, ...
+revel_mgo delete model [model_name] 
 
-bee generate controller [controllerfile]
-    generate RESTFul controllers             
+revel_mgo delete controller [controller_name]           
 `,
 }
 
@@ -30,43 +21,47 @@ func init() {
 }
 
 func deleteCode(cmd *Command, args []string){
+	// get current path 
 	curpath, _ := os.Getwd()
+
+	// check command args exist
 	if len(args) < 1 {
-		errorf("[ERRO] command is missing\n")
+		ColorLog("[ERRO] Command is missing\n")
+		ColorLog("[HINT] Usage: revel_mgo delete [model or controller] [name]\n")
 		os.Exit(2)
 	}
 
+	//check gopath in local machine
 	gopath := os.Getenv("GOPATH")
 	if gopath == "" {
-		errorf("[ERRO] $GOPATH not found\n")
-		errorf("[HINT] Set $GOPATH in your environment vairables\n")
+		ColorLog("[ERRO] $GOPATH not found\n")
+		ColorLog("[HINT] Set $GOPATH in your environment vairables\n")
 		os.Exit(2)
 	}
 
-	gcmd := args[0]
-	log.Println(len(args))
-	switch gcmd {
-	case "scaffold":
+	// get file type model or controller
+	dcmd := args[0]
+
+	switch dcmd {
 	case "controller":
-		if len(args) == 2 {
-			// cname := args[1]
-			// generateModel(cname, curpath)
-		} else {
-			errorf("[ERRO] Wrong number of arguments\n")
-			errorf("[HINT] Usage: revel_mgo generate model [controllername]\n")
+		if len(args)<  2 {
+			ColorLog("[ERRO] Wrong number of arguments\n")
+			ColorLog("[HINT] Usage: revel_mgo delete controller [controllername]\n")
 			os.Exit(2)
 		}
+
 	case "model":
 		if len(args) < 2 {
-			log.Println("[ERRO] Wrong number of arguments\n")
-			errorf("[HINT] Usage: revel_mgo generate model [modelname] [-name=\"\"]\n")
+			ColorLog("[ERRO] Wrong number of arguments\n")
+			ColorLog("[HINT] Usage: revel_mgo delete model [modelname]\n")
 			os.Exit(2)
 		}
+
 		sname := args[1]
-		log.Printf("[INFO] Using '%s' as model name\n", sname)
+		ColorLog("[INFO] Removing '%s' model\n", sname)
 		deleteModel(sname, curpath)
 	default:
 		errorf("[ERRO] command is missing\n")
 	}
-	errorf("[SUCC] generate successfully created!\n")
+	ColorLog("[SUCC] successfully deleted!\n")
 }

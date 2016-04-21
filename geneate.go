@@ -2,66 +2,68 @@ package main
 
 import(
 	"os"
-	"log"
 )
 
 var cmdGenerate = &Command{
 	UsageLine: "generate [Command]",
 	Short:     "source code generator",
 	Long: `
-bee generate scaffold [scaffoldname] [-fields=""] [-driver=mysql] [-conn="root:@tcp(127.0.0.1:3306)/test"]
-    The generate scaffold command will do a number of things for you.
-    -fields: a list of table fields. Format: field:type, ...
-    -driver: [mysql | postgres | sqlite], the default is mysql
-    -conn:   the connection string used by the driver, the default is root:@tcp(127.0.0.1:3306)/test
-    example: bee generate scaffold post -fields="title:string,body:text"
+revel_mgo generate scaffold [scaffoldname] [-fields=""]
+    example: revel_mgo generate scaffold post -fields="title:string,body:text"
 
-bee generate model [modelname] [-fields=""]
-    generate RESTFul model based on fields
-    -fields: a list of table fields. Format: field:type, ...
+revel_mgo generate model [modelname] [-fields=""]
+    example: revel_mgo generate model post -fields="title:string,body:text"
 
-bee generate controller [controllerfile]
-    generate RESTFul controllers             
+revel_mgo generate controller [controllerfile]
+    generate RESTFul controllers 
+    example: revel_mgo generate controller post
 `,
 }
 
 var fields flagValue
+
 func init() {
 	cmdGenerate.Run = generateCode
 	cmdGenerate.Flag.Var(&fields, "fields", "specify the fields want to generate.")
 }
 
 func generateCode(cmd *Command, args []string){
+	// get current path
 	curpath, _ := os.Getwd()
+
+	// check args
 	if len(args) < 1 {
-		errorf("[ERRO] command is missing\n")
+		ColorLog("[ERRO] command is missing\n")
 		os.Exit(2)
 	}
 
+	// check $GOPATH
 	gopath := os.Getenv("GOPATH")
 	if gopath == "" {
-		errorf("[ERRO] $GOPATH not found\n")
-		errorf("[HINT] Set $GOPATH in your environment vairables\n")
+		ColorLog("[ERRO] $GOPATH not found\n")
+		ColorLog("[HINT] Set $GOPATH in your environment vairables\n")
 		os.Exit(2)
 	}
 
 	gcmd := args[0]
-	log.Println(len(args))
 	switch gcmd {
 	case "scaffold":
 		if len(args) < 2 {
-			log.Println("[ERRO] Wrong number of arguments\n")
-			errorf("[HINT] Usage: revel_mgo generate model [modelname] [-fields=\"\"]\n")
+			ColorLog("[ERRO] Wrong number of arguments\n")
+			ColorLog("[HINT] Usage: revel_mgo generate scaffold [modelname] [-fields=\"\"]\n")
 			os.Exit(2)
 		}
 		cmd.Flag.Parse(args[2:])
 		if fields == "" {
-			log.Println("[ERRO] Wrong number of arguments\n")
-			errorf("[HINT] Usage: bee generate model [modelname] [-fields=\"title:string,body:text\"]\n")
+			ColorLog("[ERRO] Wrong number of arguments\n")
+			ColorLog("[HINT] Usage: bee generate scaffold [modelname] [-fields=\"title:string,body:text\"]\n")
 			os.Exit(2)
 		}
 		sname := args[1]
-		log.Printf("[INFO] Using '%s' as model name\n", sname)
+		ColorLog("[INFO] Using '%s' as controller name\n", sname)
+		ColorLog("[INFO] Using '%s' as controller name\n", sname + "Controller")
+
+		//generate model and controller
 		generateModel(sname, fields.String(), curpath)
 		generateController(sname, curpath)
 	case "controller":
@@ -69,24 +71,23 @@ func generateCode(cmd *Command, args []string){
 			cname := args[1]
 			generateController(cname, curpath)
 		} else {
-			errorf("[ERRO] Wrong number of arguments\n")
-			errorf("[HINT] Usage: revel_mgo generate model [controllername]\n")
+			ColorLog("[ERRO] Wrong number of arguments\n")
+			ColorLog("[HINT] Usage: revel_mgo generate controller [controllername]\n")
 			os.Exit(2)
 		}
 	case "model":
 		if len(args) < 2 {
-			log.Println("[ERRO] Wrong number of arguments\n")
-			errorf("[HINT] Usage: revel_mgo generate model [modelname] [-fields=\"\"]\n")
+			ColorLog("[ERRO] Wrong number of arguments\n")
+			ColorLog("[HINT] Usage: revel_mgo generate model [modelname] [-fields=\"\"]\n")
 			os.Exit(2)
 		}
 		cmd.Flag.Parse(args[2:])
 		if fields == "" {
-			log.Println("[ERRO] Wrong number of arguments\n")
-			errorf("[HINT] Usage: bee generate model [modelname] [-fields=\"title:string,body:text\"]\n")
+			ColorLog("[ERRO] Wrong number of arguments\n")
+			ColorLog("[HINT] Usage: revel_mgo generate model [modelname] [-fields=title:string,body:string]\n")
 			os.Exit(2)
 		}
 		sname := args[1]
-		log.Printf("[INFO] Using '%s' as model name\n", sname)
 		generateModel(sname, fields.String(), curpath)
 	default:
 		errorf("[ERRO] command is missing\n")

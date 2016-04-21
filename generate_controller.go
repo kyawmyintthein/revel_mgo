@@ -6,23 +6,32 @@ import(
 	"strings"
 )
 
+// generate controller
 func generateController(cname, crupath string) {
+	// get controller name and package 
 	p, f := path.Split(cname)
+
+	// set controller name to uppercase
 	controllerName := strings.Title(f)
+
+	//set default package
 	packageName := "controllers"
 	if p != "" {
 		i := strings.LastIndex(p[:len(p)-1], "/")
 		packageName = p[i+1 : len(p)-1]
 	}
+
+	// get struct for controller 
 	controllerStruct, err := GetControllerStruct(controllerName)
 	if err != nil {
 		ColorLog("[ERRO] Could not genrate controllers struct: %s\n", err)
 		os.Exit(2)
 	}
+
 	ColorLog("[INFO] Using '%s' as controller name\n", controllerName)
 	ColorLog("[INFO] Using '%s' as package name\n", packageName)
 
-
+	// create controller folders
 	filePath := path.Join(crupath ,"app", "controllers", p)
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
 		// create controller directory
@@ -32,6 +41,7 @@ func generateController(cname, crupath string) {
 		}
 	}
 
+	// create common controller.go
 	commonCtrFp := path.Join(crupath, "app", "controllers", "controller.go")
 	if _, err := os.Stat(commonCtrFp); os.IsNotExist(err) {
 		if cf, err := os.OpenFile(commonCtrFp, os.O_CREATE|os.O_EXCL|os.O_RDWR, 0666); err == nil {
@@ -40,14 +50,20 @@ func generateController(cname, crupath string) {
 			cf.WriteString(content)
 			// gofmt generated source code
 			FormatSourceCode(commonCtrFp)
-			ColorLog("[INFO] model file generated: %s\n", commonCtrFp)
+			ColorLog("[INFO] controller file generated: %s\n", commonCtrFp)
 		} else {
 			// error creating file
-			ColorLog("[ERRO] Could not create model file: %s\n", err)
+			ColorLog("[ERRO] Could not create controller file: %s\n", err)
 			os.Exit(2)
 		}
 	}
 
+	mPath := path.Join(crupath, "app", "models", strings.ToLower(controllerName)+".go")
+	if _, err := os.Stat(mPath); os.IsNotExist(err) {
+		ColorLog("[ERRO] Could not find model file: %s\n", err)
+		os.Exit(2)
+	}
+	// create controller file
 	fpath := path.Join(filePath, strings.ToLower(controllerName)+".go")
 	if f, err := os.OpenFile(fpath, os.O_CREATE|os.O_EXCL|os.O_RDWR, 0666); err == nil {
 		defer f.Close()
@@ -72,11 +88,12 @@ func generateController(cname, crupath string) {
 		ColorLog("[INFO] model file generated: %s\n", fpath)
 	} else {
 		// error creating file
-		ColorLog("[ERRO] Could not create model file: %s\n", err)
+		ColorLog("[ERRO] Could not create controller file: %s\n", err)
 		os.Exit(2)
 	}
 }
 
+// delete controller
 func deleteController(cname, crupath string) {
 	_, f := path.Split(cname)
 	controllerName := strings.Title(f)

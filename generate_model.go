@@ -6,23 +6,33 @@ import(
 	"strings"
 )
 
+
+// generate model file
 func generateModel(mname, fields, crupath string) {
+	// get name and package
 	p, f := path.Split(mname)
+
+	// Title to model name
 	modelName := strings.Title(f)
+
+	// set default package
 	packageName := "models"
 	if p != "" {
 		i := strings.LastIndex(p[:len(p)-1], "/")
 		packageName = p[i+1 : len(p)-1]
 	}
+
+	// get Struct from fileds 
 	modelStruct, err := GetStruct(modelName, fields)
 	if err != nil {
 		ColorLog("[ERRO] Could not genrate models struct: %s\n", err)
 		os.Exit(2)
 	}
+
 	ColorLog("[INFO] Using '%s' as model name\n", modelName)
 	ColorLog("[INFO] Using '%s' as package name\n", packageName)
 
-
+	// create models folder if not exist
 	filePath := path.Join(crupath ,"app", "models", p)
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
 		// create controller directory
@@ -31,18 +41,31 @@ func generateModel(mname, fields, crupath string) {
 			os.Exit(2)
 		}
 	}
+
+	// create model file with template
 	fpath := path.Join(filePath, strings.ToLower(modelName)+".go")
 	if f, err := os.OpenFile(fpath, os.O_CREATE|os.O_EXCL|os.O_RDWR, 0666); err == nil {
 		defer f.Close()
+
+		// get current path
 		paths := strings.Split(crupath, "/")
+
+		// get app name
 		projectName := paths[len(paths) - 1:][0]
+
+		// get mongodb pcakge path
 		mongoPkg := path.Join(projectName, "app", "models", "mongodb")
+
+		// set collection function name
 		collectionFuncName := "new" + string(modelName) + "Collection()"
+		
+		// get structure for update script
 		updatedStr, err := GetAttrs(fields)
 		if err != nil {
 			ColorLog("[ERRO] Could not genrate models struct: %s\n", err)
 			os.Exit(2)
 		}
+
 		content := strings.Replace(modelTpl, "{{packageName}}", packageName, -1)
 		content = strings.Replace(content, "{{mongoPkg}}", mongoPkg, -1)
 		content = strings.Replace(content, "{{modelName}}", modelName, -1)
@@ -53,8 +76,6 @@ func generateModel(mname, fields, crupath string) {
 		content = strings.Replace(content, "{{listModelName}}",  strings.ToLower(modelName) + "s", -1)
 		content = strings.Replace(content, "{{sortFields}}",  "\"-createdAt\"", -1)
 		content = strings.Replace(content, "{{updatedData}}",  updatedStr, -1)
-		
-		
 		f.WriteString(content)
 		// gofmt generated source code
 		FormatSourceCode(fpath)
@@ -66,6 +87,7 @@ func generateModel(mname, fields, crupath string) {
 	}
 }
 
+// remove existing model file
 func deleteModel(mname, crupath string) {
 	_, f := path.Split(mname)
 	modelName := strings.Title(f)

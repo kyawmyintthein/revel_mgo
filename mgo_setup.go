@@ -9,13 +9,29 @@ import(
 
 var cmdMgoSetup = &Command{
 	UsageLine: "mgo:setup",
-	Short:     "create new config for Revel application",
+	Short:     "setup mongodb in your Revel application",
 	Long: `
-Create new database.conf file in app/conf of your application.
+Create new files such database.go, driver.go, collection.go, service.go in mongodb package under app/models path. Congiuration is required. 
+Add following in your app.conf under [env]. 
+	mongo.database = revel_sample_dev
+	mongo.path = localhost
+	mongo.maxPool = 20
 
-It puts all necessary files as import. 
+Add following code in your init.go
+   	
+   	revel.OnAppStart(initApp)
 
---driver is required. The configuration will be changed based on --driver parameter.
+	// initApp contains all application level initialization
+	func initApp() {
+		Config, err := revel.LoadConfig("app.conf")
+		if err != nil || Config == nil {
+			log.Fatalf("%+v",err)
+		}
+		mongodb.MaxPool = revel.Config.IntDefault("mongo.maxPool", 0)
+		mongodb.PATH,_ = revel.Config.String("mongo.path")
+		mongodb.DBNAME, _ = revel.Config.String("mongo.database")
+		mongodb.CheckAndInitServiceConnection()
+	}
 
 For example:
     revel db:setup
@@ -149,19 +165,29 @@ func init() {
 }
 
 func mgoSetup(cmd *Command, args []string) {
+
+	// check #GOPATH
 	gopath := os.Getenv("GOPATH")
 	if gopath == "" {
-		errorf("$GOPATH not found.\nRun 'revel help db' for usage.\n")
+		ColorLog("$GOPATH not found.\nRun 'revel help db' for usage.\n")
 		os.Exit(2)
 	}
+
+	// get current path
 	pwd, _ := os.Getwd()
+
+	// get mongodb package path
 	databaseFolder := path.Join(pwd, "app", "models", "mongodb")
+	
+	// mongodb setup files
 	files := []string{"database","collection","driver","service"}
 
+	//create mongodb package folder
 	if _, err := os.Stat(databaseFolder); os.IsNotExist(err) {
 		os.MkdirAll(databaseFolder, 0777)
 	}
 
+	// Write mongo file based on template
 	for _, filename := range files{
 		databaseFile := path.Join(databaseFolder, filename+".go")
 		if file, err := os.OpenFile(databaseFile, os.O_CREATE|os.O_EXCL|os.O_RDWR, 0666); err == nil {
@@ -178,9 +204,13 @@ func mgoSetup(cmd *Command, args []string) {
 				content = serviceTpl
 			}
 			file.WriteString(content)
+			ColorLog("[SUCC] mongo file generated as '%s' .\n", databaseFile)
 		} else {
 			log.Println(err)
 			errorf("Missing database.go.\nRun 'revel help db' for usage.\n")
 		}	
 	}
+	ColorLog("[SUCC] mongodb package now in your project.\n")
+	ColorLog("[SUCC] Please add database config in your 'app.conf'.\n")
+	ColorLog("[SUCC] Please add mongo init code in your 'init.go'.\n")
 }

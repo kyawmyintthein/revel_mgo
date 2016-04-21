@@ -220,8 +220,6 @@ func GetStruct(structname, fields string) (string, error) {
 	fds := strings.Split(fields, ",")
 	for i, v := range fds {
 		kv := strings.SplitN(v, ":", 2)
-		fmt.Println("kv====")
-		fmt.Println(kv)
 		if len(kv) != 2 {
 			return "", errors.New("the filds format is wrong. should key:type,key:type " + v)
 		}		
