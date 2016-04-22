@@ -287,7 +287,6 @@ func camelString(s string) string {
 
 
 // fields support type
-// http://beego.me/docs/mvc/model/models.md#mysql
 func getType(ktype string) string {
 	kv := strings.SplitN(ktype, ":", 2)
 	switch kv[0] {
