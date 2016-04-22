@@ -104,20 +104,20 @@ func errorf(format string, args ...interface{}) {
 }
 
 const header = `~
-~ revel! http://revel.github.io
+~ revel_mgo! https://github.com/kyawmyintthein/revel_mgo
 ~
 `
 
-const usageTemplate = `usage: revel command [arguments]
+const usageTemplate = `usage: revel_mgo command [arguments]
 
 The commands are:
 {{range .}}
     {{.Name | printf "%-11s"}} {{.Short}}{{end}}
 
-Use "revel help [command]" for more information.
+Use "revel_mgo help [command]" for more information.
 `
 
-var helpTemplate = `usage: revel {{.UsageLine}}
+var helpTemplate = `usage: revel_mgo {{.UsageLine}}
 {{.Long}}
 `
 
