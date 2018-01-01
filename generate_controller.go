@@ -219,7 +219,7 @@ func (c {{contorllerStructName}}) Create() revel.Result {
     	err error
     )
 
-    err = json.NewDecoder(c.Request.Body).Decode(&{{modelObject}})
+    err = c.Params.BindJSON(&{{modelObject}})
 	if err != nil {
 		errResp := buildErrResponse(err, "403")
 		c.Response.Status = 403
@@ -241,7 +241,7 @@ func (c {{contorllerStructName}}) Update() revel.Result {
     	{{modelObject}} models.{{modelStruct}}
     	err error
     )
-    err = json.NewDecoder(c.Request.Body).Decode(&{{modelObject}})
+    err = c.Params.BindJSON(&{{modelObject}})
 	if err != nil{
 		errResp := buildErrResponse(err,"400")
     	c.Response.Status = 400
